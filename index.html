@@ -277,15 +277,19 @@
   <form>
     <label>
       <span>Сумма кредита</span>
-      <input type="number" name="S" id="S" placeholder="В рублях" value="0" />
+      <input type="number" pattern="\d*" name="S" id="S" placeholder="В рублях" value="0" />
+    </label>
+    <label>
+      <span>Первоначальный взнос</span>
+      <input type="number" pattern="\d*" name="D" id="D" placeholder="В рублях" value="0" />
     </label>
     <label>
       <span>Процентная ставка</span>
-      <input type="number" name="P" id="P" placeholder="Проценты" value="0" />
+      <input type="number" pattern="\d*" name="P" id="P" placeholder="Проценты" value="0" />
     </label>
     <label>
       <span>Срок</span>
-      <input type="number" name="N" id="N" placeholder="В годах" value="0" />
+      <input type="number" pattern="\d*" name="N" id="N" placeholder="В годах" value="0" />
     </label>
   </form>
   <p id="result"></p>
@@ -296,6 +300,11 @@
    * @type {HTMLInputElement}
    */
   const sInput = document.querySelector("#S");
+  /**
+   *
+   * @type {HTMLInputElement}
+   */
+  const dInput = document.querySelector("#D");
   /**
    *
    * @type {HTMLInputElement}
@@ -315,6 +324,9 @@
   sInput.addEventListener("input", e => {
     inputUpdateHandler();
   });
+  dInput.addEventListener("input", e => {
+    inputUpdateHandler();
+  });
   pInput.addEventListener("input", e => {
     inputUpdateHandler();
   });
@@ -324,13 +336,15 @@
 
   const inputUpdateHandler = () => {
     const sValue = sInput.value;
+    const dValue = dInput.value;
     const pValue = pInput.value;
     const nValue = nInput.value;
     if (isInputValueValid(sValue) && isInputValueValid(pValue) && isInputValueValid(nValue)) {
-      saveToLocalStorage(sValue,pValue, nValue);
-      const ipValue = ip(Number(sValue), Number(pValue), Number(nValue));
-      const overPay = (Number(ipValue) * nValue * 12) - sValue;
-      const overPayPercent = (overPay / Number(sValue)) * 100;
+      saveToLocalStorage(sValue, dValue, pValue, nValue);
+      const ipSum = Number(sValue) - (dValue || 0);
+      const ipValue = ip(ipSum, Number(pValue), Number(nValue));
+      const overPay = (Number(ipValue) * nValue * 12) - ipSum;
+      const overPayPercent = (overPay / Number(ipSum)) * 100;
       setResultText(ipValue, overPay, overPayPercent);
     } else {
       clearResultText();
@@ -376,23 +390,26 @@
   /**
    *
    * @param sValue {string}
+   * @param dValue {string}
    * @param pValue {string}
    * @param nValue {string}
    */
-  const saveToLocalStorage = (sValue,pValue, nValue) => {
+  const saveToLocalStorage = (sValue, dValue, pValue, nValue, ) => {
     localStorage.setItem("lastIP", JSON.stringify({
       sValue,
       pValue,
-      nValue
+      nValue,
+      dValue
     }));
   };
   const getFromLocalStorage = () => {
     const lastIP = localStorage.getItem("lastIP");
     if (lastIP) {
-      const { sValue, pValue, nValue } = JSON.parse(lastIP);
+      const { sValue, pValue, nValue, dValue } = JSON.parse(lastIP);
       sInput.value = sValue;
       pInput.value = pValue;
       nInput.value = nValue;
+      dInput.value = dValue;
       inputUpdateHandler();
     }
   };
